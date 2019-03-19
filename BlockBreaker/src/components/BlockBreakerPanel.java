@@ -10,14 +10,16 @@ import java.util.ArrayList;
 
 public class BlockBreakerPanel extends JPanel implements KeyListener {
     ArrayList<Block> panelBlocks = new ArrayList<>();
-    Block paddle, pressEnter;
+    ArrayList<Block> balls = new ArrayList<>();
+    Block paddle, pressEnter, ball;
     Thread thread;
     Animate animate;
     boolean gameStarted;
-
+    int ballSize=25;
     public BlockBreakerPanel() {
         paddle = new Block(250, 450, 150, 30, "\\src\\images\\Paddle.png");
         pressEnter = new Block(125, 520, 400, 30, "\\src\\images\\GameStart.png");
+        ball = new Block(312,420,25,25,"\\src\\images\\Ball.png");
         for (int i = 0; i < 8; i++)
             panelBlocks.add(new Block((i * 80) + 2, 0, 80, 30, "\\src\\images\\Blue.png"));
         for (int i = 0; i < 8; i++)
@@ -26,6 +28,7 @@ public class BlockBreakerPanel extends JPanel implements KeyListener {
             panelBlocks.add(new Block((i * 80) + 2, 64, 80, 30, "\\src\\images\\Magenta.png"));
         for (int i = 0; i < 8; i++)
             panelBlocks.add(new Block((i * 80) + 2, 96, 80, 30, "\\src\\images\\Orange.png"));
+        balls.add(ball);
         addKeyListener(this);
         setFocusable(true);
     }
@@ -34,7 +37,10 @@ public class BlockBreakerPanel extends JPanel implements KeyListener {
         super.paintComponent(g);
         for (Block block : panelBlocks)
             block.draw(g, this);
+        for (Block ball : balls)
+            ball.draw(g, this);
         paddle.draw(g, this);
+        //ball.draw(g, this);
         if (!gameStarted)
             pressEnter.draw(g, this);
     }
@@ -52,6 +58,20 @@ public class BlockBreakerPanel extends JPanel implements KeyListener {
     }
 
     public void update() {
+        for(Block ball :balls){
+            ball.x+=ball.dx;
+            if(ball.x > (getWidth() - ballSize) && ball.dx > 0 || ball.x < 0)
+                ball.dx*=-1;
+            if(ball.y < 0 || ball.intersects(paddle))
+                ball.dy*=-1;
+            ball.y+=ball.dy;
+            for(Block block :panelBlocks){
+                if(block.intersects(ball) && !block.destroyed){
+                    block.destroyed=true;
+                    ball.dy*=-1;
+                }
+            }
+        }
         repaint();
     }
 
