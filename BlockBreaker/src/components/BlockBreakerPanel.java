@@ -7,19 +7,22 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class BlockBreakerPanel extends JPanel implements KeyListener {
     ArrayList<Block> panelBlocks = new ArrayList<>();
     ArrayList<Block> balls = new ArrayList<>();
+    ArrayList<Block> powerup = new ArrayList<>();
     Block paddle, pressEnter, ball;
     Thread thread;
     Animate animate;
     boolean gameStarted;
-    int ballSize=25;
+    int ballSize = 25;
+
     public BlockBreakerPanel() {
         paddle = new Block(250, 450, 150, 30, "\\src\\images\\Paddle.png");
         pressEnter = new Block(125, 520, 400, 30, "\\src\\images\\GameStart.png");
-        ball = new Block(312,420,25,25,"\\src\\images\\Ball.png");
+        ball = new Block(312, 420, 25, 25, "\\src\\images\\Ball.png");
         for (int i = 0; i < 8; i++)
             panelBlocks.add(new Block((i * 80) + 2, 0, 80, 30, "\\src\\images\\Blue.png"));
         for (int i = 0; i < 8; i++)
@@ -28,6 +31,9 @@ public class BlockBreakerPanel extends JPanel implements KeyListener {
             panelBlocks.add(new Block((i * 80) + 2, 64, 80, 30, "\\src\\images\\Magenta.png"));
         for (int i = 0; i < 8; i++)
             panelBlocks.add(new Block((i * 80) + 2, 96, 80, 30, "\\src\\images\\Orange.png"));
+        Random random = new Random();
+        for (int i = 0; i < 16; i++)
+            panelBlocks.get(random.nextInt(32)).powerup = true;
         balls.add(ball);
         addKeyListener(this);
         setFocusable(true);
@@ -39,6 +45,8 @@ public class BlockBreakerPanel extends JPanel implements KeyListener {
             block.draw(g, this);
         for (Block ball : balls)
             ball.draw(g, this);
+        for (Block power : powerup)
+            power.draw(g, this);
         paddle.draw(g, this);
         //ball.draw(g, this);
         if (!gameStarted)
@@ -58,17 +66,29 @@ public class BlockBreakerPanel extends JPanel implements KeyListener {
     }
 
     public void update() {
-        for(Block ball :balls){
-            ball.x+=ball.dx;
-            if(ball.x > (getWidth() - ballSize) && ball.dx > 0 || ball.x < 0)
-                ball.dx*=-1;
-            if(ball.y < 0 || ball.intersects(paddle))
-                ball.dy*=-1;
-            ball.y+=ball.dy;
-            for(Block block :panelBlocks){
-                if(block.intersects(ball) && !block.destroyed){
-                    block.destroyed=true;
-                    ball.dy*=-1;
+        for(Block power :powerup){
+            power.y+=1;
+            if(power.intersects(paddle) && !power.destroyed){
+                power.destroyed=true;
+                balls.add(new Block(paddle.dx+75, 420, 25, 25, "\\src\\images\\Ball.png"));
+            }
+        }
+        for (Block ball : balls) {
+            ball.x += ball.dx;
+            if (ball.x > (getWidth() - ballSize) && ball.dx > 0 || ball.x < 0)
+                ball.dx *= -1;
+            if (ball.y < 0 || ball.intersects(paddle))
+                ball.dy *= -1;
+            ball.y += ball.dy;
+            for (Block block : panelBlocks) {
+                if ((block.left.intersects(ball) || block.right.intersects(ball)) && !block.destroyed) {
+                    ball.dx *= -1;
+                    block.destroyed = true;
+                    if(block.powerup)
+                        powerup.add(new Block(block.x,block.y,25,25,"\\src\\images\\Powerup.png"));
+                } else if (block.intersects(ball) && !block.destroyed) {
+                    block.destroyed = true;
+                    ball.dy *= -1;
                 }
             }
         }
